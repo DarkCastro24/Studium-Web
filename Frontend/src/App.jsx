@@ -41,6 +41,7 @@ function App() {
   const API_URL = GLOBAL.map((e) => { return e.BASE_URL });
 
   useEffect(() => {
+    if (!id) return; // No hacer petición si no hay usuario logueado
     const fetchUserType = async () => {
       try {
         const response = await axios.get(`${API_URL}/user/profile/${id}`);

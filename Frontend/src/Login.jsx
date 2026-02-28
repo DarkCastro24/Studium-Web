@@ -14,6 +14,14 @@ export const Login = () => {
     const redirectHome = () => {
         navigate('/home');
     };
+    //DOMINIOS VALIDOS
+    const dominiosValidos = ['gmail.com', 'hotmail.com', 'outlook.com', 'yahoo.com', 'icloud.com', 'live.com', 'uca.edu.sv'];
+
+    const validarDominioCorreo = (email) => {
+        const dominio = email.split('@')[1]?.toLowerCase();
+        return dominio && dominiosValidos.includes(dominio);
+    };
+
     //EXPRESIONES REGULARES
     const validarEstudiante = (email) => {
         const regex = /^[0-9]{8}/;
@@ -40,9 +48,9 @@ export const Login = () => {
         const userObject = jwtDecode(response.credential);
         //console.log(userObject); //DATOS DE GOOGLE
 
-        if (!userObject.hd || userObject.hd !== "uca.edu.sv") {
-            //SE DETIENE SI NO ES CORREO UCA
-            setMensaje("Inicia sesion con tu cuenta institucional")
+        if (!validarDominioCorreo(userObject.email)) {
+            //SE DETIENE SI NO ES UN DOMINIO VALIDO
+            setMensaje("Inicia sesión con un correo válido (Gmail, Hotmail, Yahoo, iCloud)")
             setEstadoBooleano(true);
             return;
         }
@@ -92,14 +100,25 @@ export const Login = () => {
 
     useEffect(() => {
         //GOOGLE
-        google.accounts.id.initialize({
-            client_id: GOOGLE,
-            callback: handleCallbackResponse,
-        });
-        google.accounts.id.renderButton(
-            document.getElementById("googleDIV"),
-            { theme: "outline", size: "large" },
-        );
+        const clientId = GLOBAL[0].GOOGLE;
+        if (!clientId) {
+            console.error("VITE_GOOGLE_ID no está configurado en .env");
+            return;
+        }
+        try {
+            google.accounts.id.initialize({
+                client_id: clientId,
+                callback: handleCallbackResponse,
+            });
+            google.accounts.id.renderButton(
+                document.getElementById("googleDIV"),
+                { theme: "outline", size: "large" },
+            );
+        } catch (error) {
+            console.error("Error al inicializar Google Sign-In:", error);
+            setMensaje("Error al cargar Google Sign-In. Verifica la configuración.");
+            setEstadoBooleano(true);
+        }
     }, []);
     //MENSAJES DE ERROR
     const [mensaje, setMensaje] = useState('');
@@ -110,7 +129,7 @@ export const Login = () => {
             <h1><b><span className='h1-rosa'>Bienvenidos a </span><span className='h1-azul'>Studium</span></b></h1>
             <article>
                 <img src={LogoUCA} alt="Logo-UCA"></img>
-                <p>Ingresa utilizando tu cuenta institucional</p>
+                <p>Ingresa utilizando tu cuenta de Google</p>
                 <div id='googleDIV' className='googlebtn'></div>
                 {
                     estadoBooleano === true &&
